@@ -22,8 +22,8 @@ export default function App() {
   // Add a small delay to prevent rate limiting
   const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 
-  // News API categories
-  const newsApiCategories = {
+  // GNews API categories
+  const gnewsCategories = {
     'general': 'general',
     'business': 'business',
     'technology': 'technology',
@@ -41,18 +41,18 @@ export default function App() {
       if (!apiKey) throw new Error('No API key found. Add VITE_NEWS_API_KEY in .env')
       
       // Add a small delay between requests
-      await delay(1000);
+      await delay(500);
       
       let url;
-      const categoryParam = newsApiCategories[category] || 'general';
+      const categoryParam = gnewsCategories[category] || 'general';
       
-      // News API endpoint
+      // GNews API endpoint
       if (query && query !== 'latest') {
-        // For search - using everything endpoint
-        url = `https://newsapi.org/v2/everything?q=${encodeURIComponent(query)}&apiKey=${apiKey}&page=${page}&pageSize=${PAGE_SIZE}&language=en&sortBy=publishedAt`;
+        // For search
+        url = `https://gnews.io/api/v4/search?q=${encodeURIComponent(query)}&apikey=${apiKey}&page=${page}&max=${PAGE_SIZE}&lang=en`;
       } else {
-        // For category-based fetching - using top-headlines
-        url = `https://newsapi.org/v2/top-headlines?category=${categoryParam}&apiKey=${apiKey}&page=${page}&pageSize=${PAGE_SIZE}&country=us`;
+        // For category-based fetching
+        url = `https://gnews.io/api/v4/top-headlines?category=${categoryParam}&apikey=${apiKey}&page=${page}&max=${PAGE_SIZE}&lang=en`;
       }
       
       const res = await fetch(url);
@@ -68,13 +68,13 @@ export default function App() {
       
       const data = await res.json();
       
-      // News API already returns articles in the correct format
+      // Map GNews API response to expected format
       const formattedArticles = (data.articles || []).map(article => ({
         ...article,
         title: article.title || 'No title',
         description: article.description || '',
         url: article.url || '#',
-        urlToImage: article.urlToImage || '',
+        urlToImage: article.image || article.urlToImage || '',
         publishedAt: article.publishedAt || new Date().toISOString(),
         source: {
           name: article.source?.name || 'Unknown source'
@@ -125,7 +125,7 @@ export default function App() {
                   {error}
                   {error.includes('rate limit') && (
                     <span className="block mt-2">
-                      The free tier of News API has limited requests. Please wait a minute and try again.
+                      The free tier of GNews has limited requests (100 per day). Please wait and try again.
                     </span>
                   )}
                 </p>
