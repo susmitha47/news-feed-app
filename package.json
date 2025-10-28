@@ -1,11 +1,15 @@
 {
   "name": "news-feed-app",
   "version": "1.0.0",
+  "private": true,
+  "engines": {
+    "node": ">=16.0.0"
+  },
   "scripts": {
     "dev": "vite",
-    "build": "vite build --mode production",
+    "build": "vite build",
     "preview": "vite preview",
-    "vercel-build": "vite build"
+    "vercel-build": "npm install && npm run build"
   },
   "dependencies": {
     "react": "^18.2.0",
