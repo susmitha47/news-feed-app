@@ -37,8 +37,7 @@ export default function App() {
     setLoading(true)
     setError(null)
     try {
-      const apiKey = import.meta.env.VITE_NEWS_API_KEY
-      if (!apiKey) throw new Error('No API key found. Add VITE_NEWS_API_KEY in .env')
+      const apiBase = import.meta.env.VITE_API_BASE || '' // e.g., '' locally, or custom domain prefix
       
       // Add a small delay between requests
       await delay(500);
@@ -46,13 +45,11 @@ export default function App() {
       let url;
       const categoryParam = gnewsCategories[category] || 'general';
       
-      // GNews API endpoint
+      // Call our serverless proxy to avoid CORS and hide the key
       if (query && query !== 'latest') {
-        // For search
-        url = `https://gnews.io/api/v4/search?q=${encodeURIComponent(query)}&apikey=${apiKey}&page=${page}&max=${PAGE_SIZE}&lang=en`;
+        url = `${apiBase}/api/gnews?q=${encodeURIComponent(query)}&page=${page}&max=${PAGE_SIZE}&lang=en`;
       } else {
-        // For category-based fetching
-        url = `https://gnews.io/api/v4/top-headlines?category=${categoryParam}&apikey=${apiKey}&page=${page}&max=${PAGE_SIZE}&lang=en`;
+        url = `${apiBase}/api/gnews?category=${categoryParam}&page=${page}&max=${PAGE_SIZE}&lang=en`;
       }
       
       const res = await fetch(url);
@@ -63,16 +60,10 @@ export default function App() {
       
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({}));
-        const errorMsg = errorData.errors ? errorData.errors.join(', ') : errorData.message;
-        throw new Error(errorMsg || `Failed to fetch news (Status: ${res.status}). Please check your API key and try again.`);
+        throw new Error(errorData.message || 'Failed to fetch news. Please check your API key and try again.');
       }
       
       const data = await res.json();
-      
-      // Check if the API returned an error in the response body
-      if (data.errors && data.errors.length > 0) {
-        throw new Error(data.errors.join(', '));
-      }
       
       // Map GNews API response to expected format
       const formattedArticles = (data.articles || []).map(article => ({
