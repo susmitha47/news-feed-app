@@ -56,24 +56,14 @@ export default function App() {
       }
       
       const res = await fetch(url);
-      const responseText = await res.text();
-      
-      console.log('API Response Status:', res.status);
-      console.log('API Response:', responseText);
       
       if (res.status === 429) {
         throw new Error('API rate limit exceeded. You might be using the free tier which has a limit of 100 requests per day.');
       }
       
       if (!res.ok) {
-        let errorMessage = `Failed to fetch news (Status: ${res.status}).`;
-        try {
-          const errorData = JSON.parse(responseText);
-          errorMessage = errorData.message || errorMessage;
-        } catch (e) {
-          console.error('Error parsing error response:', e);
-        }
-        throw new Error(errorMessage);
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Failed to fetch news. Please check your API key and try again.');
       }
       
       const data = await res.json();
@@ -133,15 +123,11 @@ export default function App() {
               <div className="ml-3">
                 <p className="text-sm text-red-700">
                   {error}
-                  {error.includes('rate limit') ? (
+                  {error.includes('rate limit') && (
                     <span className="block mt-2">
-                      GNews API free tier has a limit of 100 requests per day. Please wait or upgrade your plan.
+                      The free tier of NewsData.io has limited requests. Please wait a minute and try again.
                     </span>
-                  ) : error.includes('No API key') ? (
-                    <span className="block mt-2">
-                      Please set up your GNews API key in Vercel environment variables (VITE_NEWS_API_KEY).
-                    </span>
-                  ) : null}
+                  )}
                 </p>
               </div>
             </div>
