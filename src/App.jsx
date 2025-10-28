@@ -63,10 +63,16 @@ export default function App() {
       
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({}));
-        throw new Error(errorData.message || 'Failed to fetch news. Please check your API key and try again.');
+        const errorMsg = errorData.errors ? errorData.errors.join(', ') : errorData.message;
+        throw new Error(errorMsg || `Failed to fetch news (Status: ${res.status}). Please check your API key and try again.`);
       }
       
       const data = await res.json();
+      
+      // Check if the API returned an error in the response body
+      if (data.errors && data.errors.length > 0) {
+        throw new Error(data.errors.join(', '));
+      }
       
       // Map GNews API response to expected format
       const formattedArticles = (data.articles || []).map(article => ({
